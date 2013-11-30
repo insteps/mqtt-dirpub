@@ -122,7 +122,6 @@ int mkpath(const char *path, mode_t mode)
 }
 /* ------------------------------------------------------------- */
 
-
 /* 
  * Expand --fmask string options for output filename.
  * DateTime string expansion for --fmask
