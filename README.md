@@ -1,7 +1,7 @@
 mqtt-dirpub
 ===========
 
-A mqtt subscriber that lets you to save/organize your subscribed data messages into filesystem directory.
+A mqtt subscriber-client that lets you to save/organize your data messages into filesystem directory.
 
 This helps in organizing your subscribed data in neat hierarchy.
 
