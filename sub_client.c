@@ -64,6 +64,7 @@ struct userdata {
 	int verbose;
 	bool quiet;
 	bool no_retain;
+	bool isfmask;
 	char *fmask;
 	char *fmask_resolve;
 	char *idtext;
@@ -568,8 +569,8 @@ int main(int argc, char *argv[])
 				print_usage();
 				return 1;
 			}else{
-				//fmask = argv[i+1];
 				ud.fmask = argv[i+1];
+				ud.isfmask = true;
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--cafile")){
@@ -896,8 +897,11 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	mosquitto_connect_callback_set(mosq, my_connect_callback);
-//	mosquitto_message_callback_set(mosq, my_message_callback);
-	mosquitto_message_callback_set(mosq, my_message_file_callback);
+	if(ud.isfmask) {
+		mosquitto_message_callback_set(mosq, my_message_file_callback);
+	} else {
+		mosquitto_message_callback_set(mosq, my_message_callback);
+	}
 	if(debug){
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}

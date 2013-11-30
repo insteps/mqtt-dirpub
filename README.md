@@ -15,8 +15,11 @@ This helps in organizing your subscribed data in neat hierarchy.
     allowed masks are:
 
 `@[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]]`
-**eg.** `--fmask '/tmp/msgs/@id@date@topic'`
-will create file: `/tmp/msgs/id-2010-12-21-topicname`
+
+**eg.** 
+`--fmask '/tmp/msgs/@id@date@topic'`
+will create file: 
+`/tmp/msgs/id-2010-12-21-topicname`
 
 **topic** having hierarchy structure gets further resolved to directory.
 
