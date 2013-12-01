@@ -71,6 +71,7 @@ struct userdata {
 	char *cwd;
 	char *path;
 	char *fmask_topic;
+	bool overwrite;
 };
 
 /*
@@ -342,10 +343,15 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 	prog = strdup (file);
 	path = dirname (path);
 	prog = basename (prog);
-	
+
 	int status = mkpath(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	
-	fptr = _mosquitto_fopen(file, "a");
+
+	if(ud->overwrite) {
+		fptr = _mosquitto_fopen(file, "w");
+	} else {
+		fptr = _mosquitto_fopen(file, "a");
+	}
+
 	if(!fptr){
 		fprintf(stderr, "Error: cannot open outfile, using stdout.\n");
 		// need to do normal stdout
@@ -473,6 +479,7 @@ void print_usage(void)
 	printf("            allowed masks are:\n");
 	printf("            @[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]] \n");
 	printf("            eg. --fmask='@id@date@topic' for file id-2010-12-21-topicname\n");
+	printf(" --overwrite : overwrite the existing output file.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
 	printf("                  length message will be sent.\n");
@@ -573,6 +580,8 @@ int main(int argc, char *argv[])
 				ud.isfmask = true;
 			}
 			i++;
+		}else if(!strcmp(argv[i], "--overwrite")){
+			ud.overwrite = true;
 		}else if(!strcmp(argv[i], "--cafile")){
 			if(i==argc-1){
 				fprintf(stderr, "Error: --cafile argument given but no file specified.\n\n");
