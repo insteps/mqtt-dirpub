@@ -16,13 +16,18 @@ This helps in organizing your subscribed data in neat hierarchy.
 
 `@[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]]`
 
-**eg.** 
+**eg.**
 `--fmask '/tmp/msgs/@id@date@topic'`
 will create file: 
 `/tmp/msgs/id-2010-12-21-topicname`
 
 **topic** having hierarchy structure gets further resolved to directory.
 
+`--overwrite`
+
+Works only with `--fmask`. This options starts client in overwrite mode.
+
+**Caution:** The existing data files get overwritten with every messages received.
 
 
 Dependencies
