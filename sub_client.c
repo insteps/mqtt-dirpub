@@ -66,10 +66,12 @@ struct userdata {
 	bool no_retain;
 	bool isfmask;
 	char *fmask;
-	char *fmask_resolve;
+	char ffmask[1000];       /* limit 1000 bytes. */
+	char ftoken[1000];       /* limit 1000 bytes. */
+	//char *fmask_resolve;
 	char *idtext;
-	char *cwd;
-	char *path;
+	//char *cwd;
+	//char *path;
 	char *fmask_topic;
 	bool overwrite;
 };
@@ -203,6 +205,82 @@ const char *datetime(int fmt)
 /* ------------------------------------------------------------- */
 
 /* 
+ * Expand/resolve fmask token string.
+/* ------------------------------------------------------------- */
+void *_setfmask(char *token, void *obj)
+{
+	struct userdata *ud;
+	
+	assert(obj);
+	ud = (struct userdata *)obj;
+
+	char *str2, *subtoken;
+	char *saveptr2;
+
+	char *to = ud->ftoken;      /* limit 1000 bytes. */
+	const char *dt;
+	
+	for (str2 = token; ; str2 = NULL) {
+		subtoken = strtok_r(str2, "@", &saveptr2);
+		if (subtoken == NULL)
+		break;
+
+		/* format type */
+		if(!strcmp(subtoken, "epoch")) {
+			dt = datetime(0);
+		} else if(!strcmp(subtoken, "date")) {
+			dt = datetime(1);
+		} else if(!strcmp(subtoken, "year")) {
+			dt = datetime(2);
+		} else if(!strcmp(subtoken, "month")) {
+			dt = datetime(3);
+		} else if(!strcmp(subtoken, "day")) {
+			dt = datetime(4);
+		} else if(!strcmp(subtoken, "datetime")) {
+			dt = datetime(5);
+		} else if(!strcmp(subtoken, "time")) {
+			dt = datetime(6);
+		} else if(!strcmp(subtoken, "hour")) {
+			dt = datetime(7);
+		} else if(!strcmp(subtoken, "min")) {
+			dt = datetime(8);
+		} else if(!strcmp(subtoken, "sec")) {
+			dt = datetime(9);
+		} else if(!strcmp(subtoken, "topic")) {
+			dt = ud->fmask_topic;
+		} else if(!strcmp(subtoken, "topic1")) {
+			dt = ud->topics[0];
+		} else if(!strcmp(subtoken, "topic2")) {
+			dt = ud->topics[1];
+		} else if(!strcmp(subtoken, "topic3")) {
+			dt = ud->topics[2];
+		} else if(!strcmp(subtoken, "topic4")) {
+			dt = ud->topics[3];
+		} else if(!strcmp(subtoken, "topic5")) {
+			dt = ud->topics[4];
+		} else if(!strcmp(subtoken, "topic6")) {
+			dt = ud->topics[5];
+		} else if(!strcmp(subtoken, "topic7")) {
+			dt = ud->topics[6];
+		} else if(!strcmp(subtoken, "topic8")) {
+			dt = ud->topics[7];
+		} else if(!strcmp(subtoken, "topic9")) {
+			dt = ud->topics[8];
+		} else if(!strcmp(subtoken, "id")) {
+			dt = ud->idtext;
+		} else {
+			dt = strdup (subtoken);
+		}
+
+		to = stpcpy (to, dt);
+		to = stpcpy (to, "-");
+
+	}
+	to[strlen(to)-1] = '\0';
+
+}
+
+/* 
  * Expand --fmask string options for output filename.
 /* ------------------------------------------------------------- */
 void *_fmask(char *fmask, void *obj)
@@ -214,84 +292,41 @@ void *_fmask(char *fmask, void *obj)
 
 	char *str1, *str2, *token, *subtoken;
 	char *saveptr1, *saveptr2;
-	int j, n;
+	int j;
 
-	//char buf[500];      /* limit 500 bytes. */
-	//char *cwd = getcwd(buf, 100);
-	char *path, *prog, *fixed;
+	char *path, *prog;
 	path = strdup (fmask);
 	prog = strdup (fmask);
 	path = dirname (path);
-	ud->path = path;
+	//ud->path = path;
 	prog = basename (prog);
 	
-	char f[1000];      /* limit 1000 bytes. */
-	char *to = f;
-	const char *dt;
+	char *to = ud->ffmask;      /* limit 1000 bytes. */
 	
-	for (j = 1, str1 = prog; ; j++, str1 = NULL) {
-		token = strtok_r(str1, "@", &saveptr1);
+	to = stpcpy (to, "/");
+	for (str1 = path; ; str1 = NULL) {
+		token = strtok_r(str1, "/", &saveptr1);
 		if (token == NULL)
 			break;
-		for (str2 = token; ; str2 = NULL) {
-			subtoken = strtok_r(str2, "", &saveptr2);
-			if (subtoken == NULL)
-			break;
 
-			/* format type */
-			if(!strcmp(subtoken, "epoch")) {
-				dt = datetime(0);
-			} else if(!strcmp(subtoken, "date")) {
-				dt = datetime(1);
-			} else if(!strcmp(subtoken, "year")) {
-				dt = datetime(2);
-			} else if(!strcmp(subtoken, "month")) {
-				dt = datetime(3);
-			} else if(!strcmp(subtoken, "day")) {
-				dt = datetime(4);
-			} else if(!strcmp(subtoken, "datetime")) {
-				dt = datetime(5);
-			} else if(!strcmp(subtoken, "time")) {
-				dt = datetime(6);
-			} else if(!strcmp(subtoken, "hour")) {
-				dt = datetime(7);
-			} else if(!strcmp(subtoken, "min")) {
-				dt = datetime(8);
-			} else if(!strcmp(subtoken, "sec")) {
-				dt = datetime(9);
-			} else if(!strcmp(subtoken, "topic")) {
-				dt = ud->fmask_topic;
-			} else if(!strcmp(subtoken, "topic1")) {
-				dt = ud->topics[0];
-			} else if(!strcmp(subtoken, "topic2")) {
-				dt = ud->topics[1];
-			} else if(!strcmp(subtoken, "topic3")) {
-				dt = ud->topics[2];
-			} else if(!strcmp(subtoken, "topic4")) {
-				dt = ud->topics[3];
-			} else if(!strcmp(subtoken, "topic5")) {
-				dt = ud->topics[4];
-			} else if(!strcmp(subtoken, "topic6")) {
-				dt = ud->topics[5];
-			} else if(!strcmp(subtoken, "topic7")) {
-				dt = ud->topics[6];
-			} else if(!strcmp(subtoken, "topic8")) {
-				dt = ud->topics[7];
-			} else if(!strcmp(subtoken, "topic9")) {
-				dt = ud->topics[8];
-			} else if(!strcmp(subtoken, "id")) {
-				dt = ud->idtext;
-			} else {
-				dt = strdup (subtoken);
-			}
-			
-			to = stpcpy (to, dt);
-			to = stpcpy (to, "-");
-		}
+		/* format type */
+		_setfmask(token, ud);
+		to = stpcpy (to, ud->ftoken);
+		to = stpcpy (to, "/");
 	}
 
-	f[strlen(f)-1] = '\0';
-	ud->fmask_resolve = f;
+	for (str2 = prog; ; str2 = NULL) {
+		subtoken = strtok_r(str2, "@", &saveptr2);
+		if (subtoken == NULL)
+		break;
+
+		/* format type */
+		_setfmask(subtoken, ud);
+		to = stpcpy (to, ud->ftoken);
+		to = stpcpy (to, "-");
+	}
+
+	to[strlen(to)-1] = '\0';
 
 }
 
@@ -325,31 +360,25 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 	if(message->retain && ud->no_retain) return;
 	ud->fmask_topic = message->topic;
 
-	//char buf[100];
+	//char buf[100];      /* limit 100 bytes. */
 	//char *cwd = getcwd(buf, 100);
 	//ud->cwd = cwd;
 	FILE *fptr = NULL;
 
 	_fmask(ud->fmask, ud);
-	
-	char file[200];      /* limit 200 bytes. */
-	char *to = file;
-	to = stpcpy (to, ud->path);
-	to = stpcpy (to, "/");
-	to = stpcpy (to, ud->fmask_resolve);
 
-	char *path, *prog, *fixed;
-	path = strdup (file);
-	prog = strdup (file);
+	char *path, *prog;
+	path = strdup (ud->ffmask);
+	prog = strdup (ud->ffmask);
 	path = dirname (path);
 	prog = basename (prog);
-
+	
 	int status = mkpath(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
 	if(ud->overwrite) {
-		fptr = _mosquitto_fopen(file, "w");
+		fptr = _mosquitto_fopen(ud->ffmask, "w");
 	} else {
-		fptr = _mosquitto_fopen(file, "a");
+		fptr = _mosquitto_fopen(ud->ffmask, "a");
 	}
 
 	if(!fptr){
