@@ -295,11 +295,6 @@ void *_fmask(char *fmask, void *obj)
 
 	char *path, *prog;
 	path = strdup (fmask);
-	prog = strdup (fmask);
-	path = dirname (path);
-	//ud->path = path;
-	prog = basename (prog);
-	
 	char *to = ud->ffmask;      /* limit 1000 bytes. */
 	
 	to = stpcpy (to, "/");
@@ -312,17 +307,6 @@ void *_fmask(char *fmask, void *obj)
 		_setfmask(token, ud);
 		to = stpcpy (to, ud->ftoken);
 		to = stpcpy (to, "/");
-	}
-
-	for (str2 = prog; ; str2 = NULL) {
-		subtoken = strtok_r(str2, "@", &saveptr2);
-		if (subtoken == NULL)
-		break;
-
-		/* format type */
-		_setfmask(subtoken, ud);
-		to = stpcpy (to, ud->ftoken);
-		to = stpcpy (to, "-");
 	}
 
 	to[strlen(to)-1] = '\0';
