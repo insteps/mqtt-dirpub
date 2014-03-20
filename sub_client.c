@@ -1,6 +1,6 @@
 /*
 Copyright (c) 2009-2013 Roger Light <roger@atchoo.org>
-Copyright (c) 2013 V.Krishn <vkrishn@insteps.net>
+Copyright (c) 2013-2014 V.Krishn <vkrishn@insteps.net>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -46,9 +46,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <time.h>
 
-// try using witout them
-#include <stddef.h>
-#include <stdlib.h>
 
 #include <mosquitto.h>
 
@@ -388,13 +385,16 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 	} else{
 		if(ud->verbose){
 			if(message->payloadlen){
-				fprintf(fptr, "%s %s\n", message->topic, (const char *)message->payload);
+				fprintf(fptr, "%s ", message->topic);
+				fwrite(message->payload, 1, message->payloadlen, fptr);
+				fprintf(fptr, "\n");
 			}else{
 				fprintf(fptr, "%s (null)\n", message->topic);
 			}
 		}else{
 			if(message->payloadlen){
-				fprintf(fptr, "%s\n", (const char *)message->payload);
+				fwrite(message->payload, 1, message->payloadlen, fptr);
+				fprintf(fptr, "\n");
 			}
 		}
 		fclose(fptr);
@@ -413,14 +413,17 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 	if(ud->verbose){
 		if(message->payloadlen){
-			printf("%s %s\n", message->topic, (const char *)message->payload);
+			printf("%s ", message->topic);
+			fwrite(message->payload, 1, message->payloadlen, stdout);
+			printf("\n");
 		}else{
 			printf("%s (null)\n", message->topic);
 		}
 		fflush(stdout);
 	}else{
 		if(message->payloadlen){
-			printf("%s\n", (const char *)message->payload);
+			fwrite(message->payload, 1, message->payloadlen, stdout);
+			printf("\n");
 			fflush(stdout);
 		}
 	}
@@ -561,7 +564,6 @@ int main(int argc, char *argv[])
 	char *will_topic = NULL;
 
 	bool insecure = false;
-	//char *fmask = NULL;
 	char *cafile = NULL;
 	char *capath = NULL;
 	char *certfile = NULL;
@@ -601,7 +603,7 @@ int main(int argc, char *argv[])
 			clean_session = false;
 		}else if(!strcmp(argv[i], "--fmask")){
 			if(i==argc-1){
-				fprintf(stderr, "Error: --fmask argument given but no file specified.\n\n");
+				fprintf(stderr, "Error: --fmask argument given but no outfile specified.\n\n");
 				print_usage();
 				return 1;
 			}else{
@@ -958,8 +960,8 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Unable to connect (%d).\n", rc);
 			}
 		}
-		return rc;
 		mosquitto_lib_cleanup();
+		return rc;
 	}
 
 	rc = mosquitto_loop_forever(mosq, -1, 1);
