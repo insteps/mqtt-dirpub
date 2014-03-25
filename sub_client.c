@@ -491,7 +491,7 @@ void print_usage(void)
 	printf("                     [-i id] [-I id_prefix]\n");
 	printf("                     [-d] [-N] [--quiet] [-v]\n");
 	printf("                     [-u username [-P password]]\n");
-	printf("                     [--fmask outfile]\n");
+	printf("                     [--fmask outfile [--overwrite]]\n");
 	printf("                     [--will-topic [--will-payload payload] [--will-qos qos] [--will-retain]]\n");
 #ifdef WITH_TLS
 	printf("                     [{--cafile file | --capath dir} [--cert file] [--key file]\n");

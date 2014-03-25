@@ -22,13 +22,12 @@ allowed masks are:
 will create file: 
 `/tmp/msgs/2010/10-29/topic/id-05-40`
 
-**topic** having hierarchy structure gets further resolved to directory.
+Note: **topic**/s *having hierarchy structure gets further resolved to directory.*
 
 `--overwrite`
 
 Works only with `--fmask`. This options starts client in overwrite mode.
-
-**Caution:** The existing data files get overwritten with every messages received.
+*Caution: The existing data files get overwritten with every messages received.*
 
 
 Dependencies
