@@ -95,8 +95,8 @@ void client_config_cleanup(struct mosq_config *cfg)
 	if(cfg->socks5_password) free(cfg->socks5_password);
 #endif
 	
-	if(cfg->ffmask) free(cfg->ffmask);
-	if(cfg->ftoken) free(cfg->ftoken);
+	//if(cfg->ffmask) free(cfg->ffmask);
+	//if(cfg->ftoken) free(cfg->ftoken);
 	if(cfg->fmask_topic) free(cfg->fmask_topic);
   
 }
