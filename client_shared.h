@@ -1,5 +1,6 @@
 /*
 Copyright (c) 2014 Roger Light <roger@atchoo.org>
+Copyright (c) 2015 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
@@ -12,6 +13,7 @@ and the Eclipse Distribution License is available at
  
 Contributors:
    Roger Light - initial implementation and documentation.
+   V Krishn - implement dirpub.
 */
 
 #ifndef _CLIENT_CONFIG_H

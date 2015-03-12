@@ -168,7 +168,7 @@ const char *datetime(int fmt)
 
 /* Expand/resolve fmask token string. */
 /* ------------------------------------------------------------- */
-void *_setfmask(char *token, void *obj)
+void _setfmask(char *token, void *obj)
 {
 	struct mosq_config *cfg;
 	
@@ -238,13 +238,12 @@ void *_setfmask(char *token, void *obj)
 
 	}
 	to[strlen(to)-1] = '\0';
-	return 0;
 
 }
 
 /* Expand --fmask string options for output filename. */
 /* ------------------------------------------------------------- */
-void *_fmask(char *fmask, void *obj)
+void _fmask(char *fmask, void *obj)
 {
 	struct mosq_config *cfg;
 	
@@ -271,7 +270,6 @@ void *_fmask(char *fmask, void *obj)
 	}
 
 	to[strlen(to)-1] = '\0';
-	return 0;
 
 }
 
