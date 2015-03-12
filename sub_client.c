@@ -13,6 +13,7 @@ and the Eclipse Distribution License is available at
  
 Contributors:
    Roger Light - initial implementation and documentation.
+   V Krishn    - implement dirpub.
 */
 
 #include <assert.h>
@@ -300,6 +301,8 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 	int i;
 	bool res;
 
+	if(process_messages == false) return;
+
 	assert(obj);
 	cfg = (struct mosq_config *)obj;
 
@@ -356,6 +359,13 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 			}
 		}
 		fclose(fptr);
+	}
+	if(cfg->msg_count>0){
+		msg_count++;
+		if(cfg->msg_count == msg_count){
+			process_messages = false;
+			mosquitto_disconnect(mosq);
+		}
 	}
 }
 

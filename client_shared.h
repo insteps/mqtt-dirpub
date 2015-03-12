@@ -13,7 +13,7 @@ and the Eclipse Distribution License is available at
  
 Contributors:
    Roger Light - initial implementation and documentation.
-   V Krishn - implement dirpub.
+   V Krishn    - implement dirpub.
 */
 
 #ifndef _CLIENT_CONFIG_H
