@@ -518,7 +518,7 @@ void print_usage(void)
 	printf("            allowed masks are:\n");
 	printf("            @[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]] \n");
 	printf("            eg. --fmask='@id@date@topic' for file id-2010-12-21-topicname\n");
-	printf(" --overwrite : overwrite the existing output file.\n");
+	printf(" --overwrite : overwrite the existing output file, can be used with --fmask only.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");
 	printf("                  length message will be sent.\n");
