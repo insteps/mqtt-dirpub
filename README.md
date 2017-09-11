@@ -18,16 +18,20 @@ allowed masks are:
 `@[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]]`
 
 **eg.**
-`--fmask '/tmp/msgs/@year/@month@day/@topic/@id@hour@min'`
+`--fmask '/tmp/msgs/@year/@month@-@day/@topic/@id@-@hour@min'`
 will create file: 
-`/tmp/msgs/2010/10-29/topic/id-05-40`
+`/tmp/msgs/2010/10-29/topic/id-0540`
 
 Note: **topic**/s *having hierarchy structure gets further resolved to directory.*
 
 `--overwrite`
 
-Works only with `--fmask`. This options starts client in overwrite mode.
+Works only with `--fmask`. This option starts client in overwrite mode.
 *Caution: The existing data files get overwritten with every messages received.*
+
+`--nodesuffix`
+
+Works only with `--fmask`. This option provides file suffix for leaf/text nodes.
 
 
 Dependencies
