@@ -122,7 +122,7 @@ const char *datetime(int fmt)
 			n = snprintf(dt, size, "%02d", (int)current);
 			break;
 		case FMASK_DATE:
-			n = snprintf(dt, size, "%02d-%02d-%02d", 
+			n = snprintf(dt, size, "%02d%02d%02d", 
 				now->tm_year+1900, now->tm_mon+1, now->tm_mday);
 			break;
 		case FMASK_YEAR:
@@ -135,12 +135,12 @@ const char *datetime(int fmt)
 			n = snprintf(dt, size, "%02d", now->tm_mday);
 			break;
 		case FMASK_DATETIME:
-			n = snprintf(dt, size, "%02d%02d%02d-%02d%02d%02d", 
+			n = snprintf(dt, size, "%02d%02d%02d.%02d%02d%02d", 
 				now->tm_year+1900, now->tm_mon+1, now->tm_mday,
 				now->tm_hour, now->tm_min, now->tm_sec);
 			break;
 		case FMASK_TIME:
-			n = snprintf(dt, size, "%02d-%02d-%02d", 
+			n = snprintf(dt, size, "%02d%02d%02d", 
 				     now->tm_hour, now->tm_min, now->tm_sec);
 			break;
 		case FMASK_HOUR:
@@ -231,14 +231,12 @@ void _setfmask(char *token, void *obj)
 		} else if(!strcmp(subtoken, "id")) {
 			dt = cfg->idtext;
 		} else {
-			dt = strdup (subtoken);
+			dt = strdup(subtoken);
 		}
 
-		to = stpcpy (to, dt);
-		to = stpcpy (to, "-");
+		to = stpcpy(to, dt);
 
 	}
-	to[strlen(to)-1] = '\0';
 
 }
 
@@ -255,10 +253,10 @@ void _fmask(char *fmask, void *obj)
 	char *saveptr1;
 
 	char *path;
-	path = strdup (fmask);
+	path = strdup(fmask);
 	char *to = cfg->ffmask;      /* limit 1000 bytes. */
 	
-	to = stpcpy (to, "/");
+	to = stpcpy(to, "/");
 	for (str1 = path; ; str1 = NULL) {
 		token = strtok_r(str1, "/", &saveptr1);
 		if (token == NULL)
@@ -266,8 +264,8 @@ void _fmask(char *fmask, void *obj)
 
 		/* format type */
 		_setfmask(token, cfg);
-		to = stpcpy (to, cfg->ftoken);
-		to = stpcpy (to, "/");
+		to = stpcpy(to, cfg->ftoken);
+		to = stpcpy(to, "/");
 	}
 
 	to[strlen(to)-1] = '\0';
@@ -320,12 +318,27 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 	_fmask(cfg->fmask, cfg);
 
 	char *path, *prog;
-	path = strdup (cfg->ffmask);
-	prog = strdup (cfg->ffmask);
-	path = dirname (path);
-	prog = basename (prog);
+	path = dirname(strdup(cfg->ffmask));
+	prog = basename(strdup(cfg->ffmask));
 	
 	mkpath(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	
+	/* reasonable method to distinguish between directory 
+	 * and a writable node (by default is off) */
+	if(cfg->nodesuffix) {
+		char *sf = cfg->nsuffix;      /* limit 16 bytes. */
+		sf = stpcpy(sf, cfg->nodesuffix);
+		if(cfg->nsuffix) {
+			char *to = cfg->ffmask;
+			to = stpcpy(to, path);
+			to = stpcpy(to, "/");
+			if(prog) {
+				to = stpcpy(to, prog);
+			}
+			to = stpcpy(to, ".");
+			to = stpcpy(to, cfg->nsuffix);
+		}
+	}
 
 	if(cfg->overwrite) {
 		fptr = _mosquitto_fopen(cfg->ffmask, "w");
@@ -334,7 +347,7 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 	}
 
 	if(!fptr){
-		fprintf(stderr, "Error: cannot open outfile, using stdout.\n");
+		fprintf(stderr, "Error: cannot open outfile, using stdout - %s\n", cfg->ffmask);
 		// need to do normal stdout
 		//mosquitto_message_callback_set(mosq, "my_message_callback");
 	} else{
@@ -517,7 +530,8 @@ void print_usage(void)
 	printf(" --fmask : path to message outfile\n");
 	printf("            allowed masks are:\n");
 	printf("            @[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]] \n");
-	printf("            eg. --fmask='@id@date@topic' for file id-2010-12-21-topicname\n");
+	printf("            eg. --fmask='@id@-@date@-@topic' for file id-20101221-topicname\n");
+	printf(" --nodesuffix : suffix for leaf/text node, when --fmask is provided\n");
 	printf(" --overwrite : overwrite the existing output file, can be used with --fmask only.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
 	printf("                  unexpected disconnection. If not given and will-topic is set, a zero\n");

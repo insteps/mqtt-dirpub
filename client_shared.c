@@ -54,27 +54,27 @@ void init_config(struct mosq_config *cfg)
 void client_config_cleanup(struct mosq_config *cfg)
 {
 	int i;
-	if(cfg->id) free(cfg->id);
-	if(cfg->id_prefix) free(cfg->id_prefix);
-	if(cfg->host) free(cfg->host);
-	if(cfg->file_input) free(cfg->file_input);
-	if(cfg->message) free(cfg->message);
-	if(cfg->topic) free(cfg->topic);
-	if(cfg->bind_address) free(cfg->bind_address);
-	if(cfg->username) free(cfg->username);
-	if(cfg->password) free(cfg->password);
-	if(cfg->will_topic) free(cfg->will_topic);
-	if(cfg->will_payload) free(cfg->will_payload);
+	free(cfg->id);
+	free(cfg->id_prefix);
+	free(cfg->host);
+	free(cfg->file_input);
+	free(cfg->message);
+	free(cfg->topic);
+	free(cfg->bind_address);
+	free(cfg->username);
+	free(cfg->password);
+	free(cfg->will_topic);
+	free(cfg->will_payload);
 #ifdef WITH_TLS
-	if(cfg->cafile) free(cfg->cafile);
-	if(cfg->capath) free(cfg->capath);
-	if(cfg->certfile) free(cfg->certfile);
-	if(cfg->keyfile) free(cfg->keyfile);
-	if(cfg->ciphers) free(cfg->ciphers);
-	if(cfg->tls_version) free(cfg->tls_version);
+	free(cfg->cafile);
+	free(cfg->capath);
+	free(cfg->certfile);
+	free(cfg->keyfile);
+	free(cfg->ciphers);
+	free(cfg->tls_version);
 #  ifdef WITH_TLS_PSK
-	if(cfg->psk) free(cfg->psk);
-	if(cfg->psk_identity) free(cfg->psk_identity);
+	free(cfg->psk);
+	free(cfg->psk_identity);
 #  endif
 #endif
 	if(cfg->topics){
@@ -90,14 +90,14 @@ void client_config_cleanup(struct mosq_config *cfg)
 		free(cfg->filter_outs);
 	}
 #ifdef WITH_SOCKS
-	if(cfg->socks5_host) free(cfg->socks5_host);
-	if(cfg->socks5_username) free(cfg->socks5_username);
-	if(cfg->socks5_password) free(cfg->socks5_password);
+	free(cfg->socks5_host);
+	free(cfg->socks5_username);
+	free(cfg->socks5_password);
 #endif
 	
-	//if(cfg->ffmask) free(cfg->ffmask);
-	//if(cfg->ftoken) free(cfg->ftoken);
-	if(cfg->fmask_topic) free(cfg->fmask_topic);
+	//free(cfg->ffmask);
+	//free(cfg->ftoken);
+	free(cfg->fmask_topic);
   
 }
 
@@ -126,6 +126,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	if(env){
 		len = strlen(env) + strlen("/mosquitto_pub") + 1;
 		loc = malloc(len);
+		if(!loc){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 		if(pub_or_sub == CLIENT_PUB){
 			snprintf(loc, len, "%s/mosquitto_pub", env);
 		}else{
@@ -137,6 +141,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 		if(env){
 			len = strlen(env) + strlen("/.config/mosquitto_pub") + 1;
 			loc = malloc(len);
+			if(!loc){
+				fprintf(stderr, "Error: Out of memory.\n");
+				return 1;
+			}
 			if(pub_or_sub == CLIENT_PUB){
 				snprintf(loc, len, "%s/.config/mosquitto_pub", env);
 			}else{
@@ -153,6 +161,10 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	if(rc > 0 && rc < 1024){
 		len = strlen(env) + strlen("\\mosquitto_pub.conf") + 1;
 		loc = malloc(len);
+		if(!loc){
+			fprintf(stderr, "Error: Out of memory.\n");
+			return 1;
+		}
 		if(pub_or_sub == CLIENT_PUB){
 			snprintf(loc, len, "%s\\mosquitto_pub.conf", env);
 		}else{
@@ -279,6 +291,14 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 			}else{
 				cfg->fmask = argv[i+1];
 				cfg->isfmask = true;
+			}
+			i++;
+		}else if(!strcmp(argv[i], "--nodesuffix")){
+			if(i==argc-1){
+				fprintf(stderr, "Error: --nodesuffix argument given but no text specified.\n\n");
+				return 1;
+			}else{
+				cfg->nodesuffix = argv[i+1];
 			}
 			i++;
 		}else if(!strcmp(argv[i], "--overwrite")){
@@ -702,7 +722,7 @@ int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
 		return 1;
 	}
 #  endif
-	if(cfg->tls_version && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
+	if((cfg->tls_version || cfg->ciphers) && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
 		mosquitto_lib_cleanup();
 		return 1;
@@ -739,14 +759,14 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 		hostname[0] = '\0';
 		gethostname(hostname, 256);
 		hostname[255] = '\0';
-		len = strlen(id_base) + strlen("/-") + 6 + strlen(hostname);
+		len = strlen(id_base) + strlen("|-") + 6 + strlen(hostname);
 		cfg->id = malloc(len);
 		if(!cfg->id){
 			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
 			mosquitto_lib_cleanup();
 			return 1;
 		}
-		snprintf(cfg->id, len, "%s/%d-%s", id_base, getpid(), hostname);
+		snprintf(cfg->id, len, "%s|%d-%s", id_base, getpid(), hostname);
 		if(strlen(cfg->id) > MOSQ_MQTT_ID_MAX_LENGTH){
 			/* Enforce maximum client id length of 23 characters */
 			cfg->id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
@@ -769,7 +789,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 #else
 	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 #endif
-	if(rc){
+	if(rc>0){
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){
 #ifndef WIN32
@@ -779,7 +799,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 #endif
 				fprintf(stderr, "Error: %s\n", err);
 			}else{
-				fprintf(stderr, "Unable to connect (%d).\n", rc);
+				fprintf(stderr, "Unable to connect (%s).\n", mosquitto_strerror(rc));
 			}
 		}
 		mosquitto_lib_cleanup();
@@ -936,6 +956,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 			port[len] = '\0';
 		}else{
 			host = malloc(len + 1);
+			if(!host){
+				fprintf(stderr, "Error: Out of memory.\n");
+				goto cleanup;
+			}
 			memcpy(host, &(str[start]), len);
 			host[len] = '\0';
 		}

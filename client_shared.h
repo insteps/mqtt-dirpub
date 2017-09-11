@@ -97,6 +97,8 @@ struct mosq_config {
 	char ftoken[1000];       /* limit 1000 bytes. */
 	char *idtext;
 	char *fmask_topic;
+	char *nodesuffix;
+	char nsuffix[16];        /* limit 16 bytes. */
 
 };
 
