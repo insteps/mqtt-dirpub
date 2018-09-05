@@ -1,6 +1,6 @@
 /*
-Copyright (c) 2014 Roger Light <roger@atchoo.org>
-Copyright (c) 2015-2017 V.Krishn <vkrishn@insteps.net>
+Copyright (c) 2014-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2015-2018 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License v1.0
