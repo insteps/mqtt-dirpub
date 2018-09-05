@@ -16,7 +16,7 @@ Contributors:
    V Krishn    - implement dirpub.
 */
 
-#define _POSIX_C_SOURCE 200809L
+#include "config.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -128,8 +128,8 @@ void init_config(struct mosq_config *cfg)
 	cfg->keepalive = 60;
 	cfg->clean_session = true;
 	cfg->eol = true;
-	cfg->protocol_version = MQTT_PROTOCOL_V31;
-	
+	cfg->protocol_version = MQTT_PROTOCOL_V311;
+
 	cfg->isfmask = false;
 	cfg->overwrite = false;
 
@@ -189,7 +189,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 	//free(cfg->ffmask);
 	//free(cfg->ftoken);
 	free(cfg->fmask_topic);
-  
+
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
@@ -1010,20 +1010,20 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 	int rc;
 	int port;
 
-#ifdef WITH_TLS
 	if(cfg->port < 0){
+#ifdef WITH_TLS
 		if(cfg->cafile || cfg->capath
-#ifdef WITH_TLS_PSK
+#  ifdef WITH_TLS_PSK
 				|| cfg->psk
-#endif
+#  endif
 				){
 			port = 8883;
-		}else{
+		}else
+#endif
+		{
 			port = 1883;
 		}
-	}else
-#endif
-	{
+	}else{
 		port = cfg->port;
 	}
 

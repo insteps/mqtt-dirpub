@@ -16,7 +16,7 @@ Contributors:
    V Krishn    - implement dirpub.
 */
 
-#define _POSIX_C_SOURCE 200809L
+#include "config.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -557,6 +557,7 @@ void print_usage(void)
 	printf("            allowed masks are:\n");
 	printf("            @[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]] \n");
 	printf("            eg. --fmask='@id@-@date@-@topic' for file id-20101221-topicname\n");
+	printf("            NOTE: option -F (new in v1.5.0) does have any effect when used with --fmask\n");
 	printf(" --nodesuffix : suffix for leaf/text node, when --fmask is provided\n");
 	printf(" --overwrite : overwrite the existing output file, can be used with --fmask only.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
