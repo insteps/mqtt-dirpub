@@ -1006,7 +1006,11 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 
 int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 {
+#ifndef WIN32
+	char *err;
+#else
 	char err[1024];
+#endif
 	int rc;
 	int port;
 
@@ -1040,7 +1044,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 		if(!cfg->quiet){
 			if(rc == MOSQ_ERR_ERRNO){
 #ifndef WIN32
-				strerror_r(errno, err, 1024);
+				err = strerror(errno);
 #else
 				FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errno, 0, (LPTSTR)&err, 1024, NULL);
 #endif
