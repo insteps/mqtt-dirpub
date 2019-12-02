@@ -56,7 +56,7 @@ void my_signal_handler(int signum)
 
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message);
 int mkpath(const char *path, mode_t mode);
-void _fmask(char *fmask, void *obj);
+void _fmask(char *fmask, void *obj, const struct mosquitto_message *message);
 
 /* 
 File open with given mode.
@@ -107,7 +107,12 @@ void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mo
 
 	FILE *fptr = NULL;
 
-	_fmask(cfg->fmask, cfg);
+	if(cfg->format == NULL && strlen(cfg->fmask) >= 1) {
+		_fmask(cfg->fmask, cfg, message);
+	}
+	if(cfg->format && strlen(cfg->fmask) == 0) { /* experimental */
+		_fmask(cfg->format, cfg, message);
+	}
 
 	char *path, *prog;
 	path = dirname(strdup(cfg->ffmask));

@@ -37,6 +37,7 @@ Contributors:
 #endif
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #ifdef __APPLE__
 #  include <sys/time.h>
@@ -547,7 +548,7 @@ static void _setfmask(char *token, void *obj)
 
 /* Expand --fmask string options for output filename. */
 /* ------------------------------------------------------------- */
-void _fmask(char *fmask, void *obj)
+void _fmask(char *fmask, void *obj, const struct mosquitto_message *message)
 {
 	struct mosq_config *cfg;
 
@@ -560,20 +561,38 @@ void _fmask(char *fmask, void *obj)
 	char *path;
 	path = strdup(fmask);
 	char *to = cfg->ffmask;      /* limit 1000 bytes. */
+	if(cfg->verbose == 1) {
+		printf("%s\t", path); /* if verbose (-v) is enabled */
+	}
 
-	to = stpcpy(to, "/");
-	for (str1 = path; ; str1 = NULL) {
-		token = strtok_r(str1, "/", &saveptr1);
-		if (token == NULL)
-			break;
+	to = stpcpy(to, "/");  /* make sure path starts with a slash */
+	if(cfg->format == NULL && strlen(cfg->fmask) >= 1) {
+		for (str1 = path; ; str1 = NULL) {
+			token = strtok_r(str1, "/", &saveptr1);
+			if (token == NULL)
+				break;
 
-		/* format type */
-		_setfmask(token, cfg);
-		to = stpcpy(to, cfg->ftoken);
-		to = stpcpy(to, "/");
+			/* format type */
+			_setfmask(token, cfg);
+			to = stpcpy(to, cfg->ftoken);
+			to = stpcpy(to, "/");
+		}
+	} else { /* experimental */
+		char buf[1000] = { 0 };
+		fclose(stdout);
+		stdout = fmemopen(buf, sizeof(buf), "w");
+		setbuf(stdout, NULL);
+		formatted_print(cfg, message);
+		to = stpcpy(to, buf);
+		int fd;
+		fd = open("/dev/tty",  O_WRONLY);
+		stdout = fdopen(fd, "w");    
 	}
 
 	to[strlen(to)-1] = '\0';
+	if(cfg->verbose == 1) {
+		printf("%s\n", cfg->ffmask); /* if verbose (-v) is enabled */
+	}
 
 }
 
