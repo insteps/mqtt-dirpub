@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2014-2019 Roger Light <roger@atchoo.org>
 Copyright (c) 2015-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
@@ -134,7 +134,6 @@ void init_config(struct mosq_config *cfg)
 
 	cfg->isfmask = false;
 	cfg->overwrite = false;
-
 }
 
 void client_config_cleanup(struct mosq_config *cfg)
@@ -187,11 +186,10 @@ void client_config_cleanup(struct mosq_config *cfg)
 	free(cfg->socks5_username);
 	free(cfg->socks5_password);
 #endif
-	
+
 	//free(cfg->ffmask);
 	//free(cfg->ftoken);
 	free(cfg->fmask_topic);
-
 }
 
 int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])

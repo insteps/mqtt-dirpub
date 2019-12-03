@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 Copyright (c) 2013-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
@@ -24,18 +24,14 @@ Contributors:
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <libgen.h> /* dirname, basename */
 #ifndef WIN32
 #include <unistd.h>
 #include <signal.h>
 #else
-#include <sysstat.h>
 #include <process.h>
 #include <winsock2.h>
 #define snprintf sprintf_s
 #endif
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include <mosquitto.h>
 #include "client_shared.h"
@@ -55,129 +51,8 @@ void my_signal_handler(int signum)
 #endif
 
 void print_message(struct mosq_config *cfg, const struct mosquitto_message *message);
-int mkpath(const char *path, mode_t mode);
-void _fmask(char *fmask, void *obj, const struct mosquitto_message *message);
+void print_message_file(struct mosq_config *cfg, const struct mosquitto_message *message);
 
-/* 
-File open with given mode.
-returns file descriptor (fd)
-*/
-/* ------------------------------------------------------------- */
-FILE *_mosquitto_fopen(const char *path, const char *mode)
-{
-#ifdef WIN32
-	char buf[MAX_PATH];
-	int rc;
-	rc = ExpandEnvironmentStrings(path, buf, MAX_PATH);
-	if(rc == 0 || rc == MAX_PATH) {
-		return NULL;
-	}else {
-		return fopen(buf, mode);
-	}
-#else
-	return fopen(path, mode);
-#endif
-}
-
-void my_message_file_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
-{
-	struct mosq_config *cfg;
-	int i;
-	bool res;
-
-	if(process_messages == false) return;
-
-	assert(obj);
-	cfg = (struct mosq_config *)obj;
-
-	if(cfg->retained_only && !message->retain && process_messages){
-		process_messages = false;
-		mosquitto_disconnect(mosq);
-		return;
-	}
-    
-	if(message->retain && cfg->no_retain) return;
-	if(cfg->filter_outs){
-		for(i=0; i<cfg->filter_out_count; i++){
-			mosquitto_topic_matches_sub(cfg->filter_outs[i], message->topic, &res);
-			if(res) return;
-		}
-	}
-	cfg->fmask_topic = message->topic;
-
-	FILE *fptr = NULL;
-
-	if(cfg->format == NULL && strlen(cfg->fmask) >= 1) {
-		_fmask(cfg->fmask, cfg, message);
-	}
-	if(cfg->format && strlen(cfg->fmask) == 0) { /* experimental */
-		_fmask(cfg->format, cfg, message);
-	}
-
-	char *path, *prog;
-	path = dirname(strdup(cfg->ffmask));
-	prog = basename(strdup(cfg->ffmask));
-	
-	mkpath(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	
-	/* reasonable method to distinguish between directory 
-	 * and a writable node (by default is off) */
-	if(cfg->nodesuffix) {
-		char *sf = cfg->nsuffix;      /* limit 16 bytes. */
-		sf = stpcpy(sf, cfg->nodesuffix);
-		if(cfg->nsuffix) {
-			char *to = cfg->ffmask;
-			to = stpcpy(to, path);
-			to = stpcpy(to, "/");
-			if(prog) {
-				to = stpcpy(to, prog);
-			}
-			to = stpcpy(to, ".");
-			to = stpcpy(to, cfg->nsuffix);
-		}
-	}
-
-	if(cfg->overwrite) {
-		fptr = _mosquitto_fopen(cfg->ffmask, "w");
-	} else {
-		fptr = _mosquitto_fopen(cfg->ffmask, "a");
-	}
-
-	if(!fptr){
-		fprintf(stderr, "Error: cannot open outfile, using stdout - %s\n", cfg->ffmask);
-		// need to do normal stdout
-		//mosquitto_message_callback_set(mosq, "my_message_callback");
-	} else{
-		if(cfg->verbose){
-			if(message->payloadlen){
-				fprintf(fptr, "%s ", message->topic);
-				fwrite(message->payload, 1, message->payloadlen, fptr);
-				if(cfg->eol){
-					fprintf(fptr, "\n");
-				}
-			}else{
-				if(cfg->eol){
-					fprintf(fptr, "%s (null)\n", message->topic);
-				}
-			}
-		}else{
-			if(message->payloadlen){
-				fwrite(message->payload, 1, message->payloadlen, fptr);
-				if(cfg->eol){
-					fprintf(fptr, "\n");
-				}
-			}
-		}
-		fclose(fptr);
-	}
-	if(cfg->msg_count>0){
-		msg_count++;
-		if(cfg->msg_count == msg_count){
-			process_messages = false;
-			mosquitto_disconnect(mosq);
-		}
-	}
-}
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
 {
@@ -204,7 +79,11 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		}
 	}
 
-	print_message(cfg, message);
+	if(cfg->fmask){
+		print_message_file(cfg, message);
+	}else{
+		print_message(cfg, message);
+	}
 
 	if(cfg->msg_count>0){
 		msg_count++;
@@ -331,7 +210,7 @@ void print_usage(void)
 	printf("            allowed masks are:\n");
 	printf("            @[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]] \n");
 	printf("            eg. --fmask='@id@-@date@-@topic' for file id-20101221-topicname\n");
-	printf("            NOTE: option -F (new in v1.5.0) does have any effect when used with --fmask\n");
+	printf("            NOTE: enabled (experimental) use of option -F <value> with empty --fmask "" \n");
 	printf(" --nodesuffix : suffix for leaf/text node, when --fmask is provided\n");
 	printf(" --overwrite : overwrite the existing output file, can be used with --fmask only.\n");
 	printf(" --will-payload : payload for the client Will, which is sent by the broker in case of\n");
@@ -422,12 +301,7 @@ int main(int argc, char *argv[])
 		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 	}
 	mosquitto_connect_with_flags_callback_set(mosq, my_connect_callback);
-
-	if(cfg.isfmask) {
-		mosquitto_message_callback_set(mosq, my_message_file_callback);
-	} else {
-		mosquitto_message_callback_set(mosq, my_message_callback);
-	}
+	mosquitto_message_callback_set(mosq, my_message_callback);
 
 	rc = client_connect(mosq, &cfg);
 	if(rc) return rc;

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
 Copyright (c) 2015-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
@@ -24,6 +24,7 @@ Contributors:
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <libgen.h> /* dirname, basename */
 #ifndef WIN32
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -373,7 +374,7 @@ static int do_mkdir(const char *path, mode_t mode)
 ** each directory in path exists, rather than optimistically creating
 ** the last element and working backwards.
 */
-int mkpath(const char *path, mode_t mode)
+static int mkpath(const char *path, mode_t mode)
 {
 	char *pp;
 	char *sp;
@@ -548,7 +549,7 @@ static void _setfmask(char *token, void *obj)
 
 /* Expand --fmask string options for output filename. */
 /* ------------------------------------------------------------- */
-void _fmask(char *fmask, void *obj, const struct mosquitto_message *message)
+static void _fmask(char *fmask, void *obj, const struct mosquitto_message *message)
 {
 	struct mosq_config *cfg;
 
@@ -596,3 +597,96 @@ void _fmask(char *fmask, void *obj, const struct mosquitto_message *message)
 
 }
 
+/*
+File open with given mode.
+returns file descriptor (fd)
+*/
+/* ------------------------------------------------------------- */
+static FILE *_mosquitto_fopen(const char *path, const char *mode)
+{
+#ifdef WIN32
+	char buf[MAX_PATH];
+	int rc;
+	rc = ExpandEnvironmentStrings(path, buf, MAX_PATH);
+	if(rc == 0 || rc == MAX_PATH) {
+		return NULL;
+	}else {
+		return fopen(buf, mode);
+	}
+#else
+	return fopen(path, mode);
+#endif
+}
+
+void print_message_file(struct mosq_config *cfg, const struct mosquitto_message *message)
+{
+    
+	cfg->fmask_topic = message->topic;
+
+	FILE *fptr = NULL;
+
+	if(cfg->format == NULL && strlen(cfg->fmask) >= 1) {
+		_fmask(cfg->fmask, cfg, message);
+	}
+	if(cfg->format && strlen(cfg->fmask) == 0) { /* experimental */
+		_fmask(cfg->format, cfg, message);
+	}
+
+	char *path, *prog;
+	path = dirname(strdup(cfg->ffmask));
+	prog = basename(strdup(cfg->ffmask));
+	
+	mkpath(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	
+	/* reasonable method to distinguish between directory 
+	 * and a writable node (by default is off) */
+	if(cfg->nodesuffix) {
+		char *sf = cfg->nsuffix;      /* limit 16 bytes. */
+		sf = stpcpy(sf, cfg->nodesuffix);
+		if(cfg->nsuffix) {
+			char *to = cfg->ffmask;
+			to = stpcpy(to, path);
+			to = stpcpy(to, "/");
+			if(prog) {
+				to = stpcpy(to, prog);
+			}
+			to = stpcpy(to, ".");
+			to = stpcpy(to, cfg->nsuffix);
+		}
+	}
+
+	if(cfg->overwrite) {
+		fptr = _mosquitto_fopen(cfg->ffmask, "w");
+	} else {
+		fptr = _mosquitto_fopen(cfg->ffmask, "a");
+	}
+
+	if(!fptr){
+		fprintf(stderr, "Error: cannot open outfile, using stdout - %s\n", cfg->ffmask);
+		// need to do normal stdout
+		//mosquitto_message_callback_set(mosq, "my_message_callback");
+	} else{
+		if(cfg->verbose){
+			if(message->payloadlen){
+				fprintf(fptr, "%s ", message->topic);
+				fwrite(message->payload, 1, message->payloadlen, fptr);
+				if(cfg->eol){
+					fprintf(fptr, "\n");
+				}
+			}else{
+				if(cfg->eol){
+					fprintf(fptr, "%s (null)\n", message->topic);
+				}
+			}
+		}else{
+			if(message->payloadlen){
+				fwrite(message->payload, 1, message->payloadlen, fptr);
+				if(cfg->eol){
+					fprintf(fptr, "\n");
+				}
+			}
+		}
+		fclose(fptr);
+	}
+    
+}

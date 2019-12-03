@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 Roger Light <roger@atchoo.org>
+Copyright (c) 2014-2019 Roger Light <roger@atchoo.org>
 Copyright (c) 2015-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
@@ -104,7 +104,6 @@ struct mosq_config {
 	char *fmask_topic;
 	char *nodesuffix;
 	char nsuffix[16];        /* limit 16 bytes. */
-
 };
 
 int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
