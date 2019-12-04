@@ -621,24 +621,23 @@ static FILE *_mosquitto_fopen(const char *path, const char *mode)
 
 void print_message_file(struct mosq_config *cfg, const struct mosquitto_message *message)
 {
-    
+
 	cfg->fmask_topic = message->topic;
 
 	FILE *fptr = NULL;
 
-	if(cfg->format == NULL && strlen(cfg->fmask) >= 1) {
+	if(cfg->format && strlen(cfg->fmask) == 0) {
+		_fmask(cfg->format, cfg, message); /* experimental */
+	} else {
 		_fmask(cfg->fmask, cfg, message);
-	}
-	if(cfg->format && strlen(cfg->fmask) == 0) { /* experimental */
-		_fmask(cfg->format, cfg, message);
 	}
 
 	char *path, *prog;
 	path = dirname(strdup(cfg->ffmask));
 	prog = basename(strdup(cfg->ffmask));
-	
+
 	mkpath(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	
+
 	/* reasonable method to distinguish between directory 
 	 * and a writable node (by default is off) */
 	if(cfg->nodesuffix) {
