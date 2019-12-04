@@ -21,6 +21,12 @@ Contributors:
 
 #include <stdio.h>
 
+#ifdef WIN32
+#  include <winsock2.h>
+#else
+#  include <sys/time.h>
+#endif
+
 /* pub_client.c modes */
 #define MSGMODE_NONE 0
 #define MSGMODE_CMD 1
@@ -112,7 +118,6 @@ struct mosq_config {
 	mosquitto_property *will_props;
 	bool have_topic_alias; /* pub */
 	char *response_topic; /* rr */
-
 
 	/* dirpub */
 	bool isfmask;
