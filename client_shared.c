@@ -438,7 +438,7 @@ int cfg_add_topic(struct mosq_config *cfg, int type, char *topic, const char *ar
 		cfg->topic_count++;
 		cfg->topics = realloc(cfg->topics, cfg->topic_count*sizeof(char *));
 		if(!cfg->topics){
-			fprintf(stderr, "Error: Out of memory.\n");
+			err_printf(cfg, "Error: Out of memory.\n");
 			return 1;
 		}
 		cfg->topics[cfg->topic_count-1] = strdup(topic);
@@ -1456,11 +1456,11 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 
 	return 0;
 cleanup:
-	if(username_or_host) free(username_or_host);
-	if(username) free(username);
-	if(password) free(password);
-	if(host) free(host);
-	if(port) free(port);
+	free(username_or_host);
+	free(username);
+	free(password);
+	free(host);
+	free(port);
 	return 1;
 }
 #endif
