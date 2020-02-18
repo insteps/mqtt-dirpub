@@ -629,6 +629,11 @@ void print_message_file(struct mosq_config *cfg, const struct mosquitto_message 
 	if(cfg->format && strlen(cfg->fmask) == 0) {
 		_fmask(cfg->format, cfg, message); /* experimental */
 	} else {
+		if(strlen(cfg->fmask) == 0) {
+			fprintf(stderr, "Error: fmask is empty, try an absolute path string.\n");
+			fflush(stdout);
+			return;
+        }
 		_fmask(cfg->fmask, cfg, message);
 	}
 
