@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 Copyright (c) 2015-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials

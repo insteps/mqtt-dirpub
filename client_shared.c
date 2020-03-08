@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2014-2020 Roger Light <roger@atchoo.org>
 Copyright (c) 2015-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
@@ -141,6 +141,7 @@ void init_config(struct mosq_config *cfg, int pub_or_sub)
 	}else{
 		cfg->protocol_version = MQTT_PROTOCOL_V311;
 	}
+	cfg->session_expiry_interval = -1; /* -1 means unset here, the user can't set it to -1. */
 	cfg->isfmask = false;
 	cfg->overwrite = false;
 }
@@ -358,9 +359,27 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 	}
 #endif
 
-	if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
-		fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
-		return 1;
+	if(cfg->protocol_version == 5){
+		if(cfg->clean_session == false && cfg->session_expiry_interval == -1){
+			/* User hasn't set session-expiry-interval, but has cleared clean
+			 * session so default to persistent session. */
+			cfg->session_expiry_interval = UINT32_MAX;
+		}
+		if(cfg->session_expiry_interval > 0){
+			if(cfg->session_expiry_interval == UINT32_MAX && (cfg->id_prefix || !cfg->id)){
+				fprintf(stderr, "Error: You must provide a client id if you are using an infinite session expiry interval.\n");
+				return 1;
+			}
+			rc = mosquitto_property_add_int32(&cfg->connect_props, MQTT_PROP_SESSION_EXPIRY_INTERVAL, cfg->session_expiry_interval);
+			if(rc){
+				fprintf(stderr, "Error adding property session-expiry-interval\n");
+			}
+		}
+	}else{
+		if(cfg->clean_session == false && (cfg->id_prefix || !cfg->id)){
+			fprintf(stderr, "Error: You must provide a client id if you are using the -c option.\n");
+			return 1;
+		}
 	}
 
 	if(pub_or_sub == CLIENT_SUB){

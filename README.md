@@ -18,9 +18,9 @@ allowed masks are:
 `@[epoch|date|year|month|day|datetime|hour|min|sec|id|topic[1-9]]`
 
 **eg.**
-`--fmask '/tmp/msgs/@year/@month@-@day/@topic/@id@-@hour@min'`
+`--fmask '/tmp/msgs/@year/@month@-@day/@topic/@hour@min'`
 will create file: 
-`/tmp/msgs/2010/10-29/topic/id-0540`
+`/tmp/msgs/2010/10-29/topic/0540`
 
 Note: **topic**/s *having hierarchy structure gets further resolved to directory.*
 

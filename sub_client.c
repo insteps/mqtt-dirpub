@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2009-2019 Roger Light <roger@atchoo.org>
+Copyright (c) 2009-2020 Roger Light <roger@atchoo.org>
 Copyright (c) 2013-2019 V.Krishn <vkrishn@insteps.net>
 
 All rights reserved. This program and the accompanying materials
@@ -97,6 +97,10 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 			mosquitto_topic_matches_sub(cfg.filter_outs[i], message->topic, &res);
 			if(res) return;
 		}
+	}
+
+	if(cfg.remove_retained && message->retain){
+		mosquitto_publish(mosq, &last_mid, message->topic, 0, NULL, 1, true);
 	}
 
 	if(cfg.fmask){
